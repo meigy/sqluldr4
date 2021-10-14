@@ -126,8 +126,8 @@ int main(int argc, char *argv[])
   char *p_pass=malloc(50);
   char *p_host=malloc(20);
   
-  FILE *fp;
-  FILE *fpctl;
+  FILE *fp = NULL;
+  FILE *fpctl = NULL;
   
   flen = rlen = 1;
      

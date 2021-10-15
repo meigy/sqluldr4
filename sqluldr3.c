@@ -653,7 +653,7 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
       
       //tempcol->colname[tempcol->colname_len]='\0';
       //printf("colname:%s\n",tempcol->colname);
-      printf("%s:%d:%d:%d:%d\n",tempcol->colname, tempcol->coltype, tempcol->colwidth, tempcol->precision, tempcol->scale);
+      printf("%s:%d:%d:%d:%d\t",tempcol->colname, tempcol->coltype, tempcol->colwidth, tempcol->precision, tempcol->scale);
       
       nextcol->next = tempcol;
       nextcol=tempcol;
@@ -769,7 +769,8 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
                        (dvoid *) nextcol->colbuf,nextcol->colwidth, SQLT_STR, nextcol->indp,
                        (ub2 *)nextcol->col_retlen,(ub2 *)nextcol->col_retcode, OCI_DEFAULT));
       }		
-    		
+	  
+      printf("fixed\t%s:%d:%d:%d:%d\n",nextcol->colname, nextcol->coltype, nextcol->colwidth, nextcol->precision, nextcol->scale);    		
   }
   if(fpctl != NULL)
   {	

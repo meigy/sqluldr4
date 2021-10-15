@@ -616,6 +616,7 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
   ub4           numcols;       //select-list columns
   struct COLUMN *tempcol;
   struct COLUMN *nextcol;
+  ub4           arraysize;
 
   nextcol = collist;
 
@@ -655,6 +656,7 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
       nextcol->next = tempcol;
       nextcol=tempcol;
       
+      arraysize = DEFAULT_ARRAY_SIZE;
       switch(nextcol->coltype)
       {
           case SQLT_DATE:
@@ -675,7 +677,8 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
                 fprintf(fpctl,"  %s CHAR(%d) ", nextcol->colname, 2 * DEFAULT_LONG_SIZE);
              break;
           case SQLT_BLOB: /* BLOB */
-          	 DEFAULT_ARRAY_SIZE = 1;
+          	 //DEFAULT_ARRAY_SIZE = 1;
+		 arraysize = 1;
           	 OCIDescriptorAlloc((dvoid *) envhp, (dvoid **) &nextcol->blob,
           	                    (ub4)OCI_DTYPE_LOB, (size_t) 0, (dvoid **) 0);
              if(fpctl != NULL)
@@ -686,7 +689,8 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
              }   
           	 break;
           case SQLT_CLOB: /* BLOB */
-          	 DEFAULT_ARRAY_SIZE = 1;
+          	 //DEFAULT_ARRAY_SIZE = 1;
+		 arraysize = 1;
           	 OCIDescriptorAlloc((dvoid *) envhp, (dvoid **) &nextcol->clob,
           	                    (ub4)OCI_DTYPE_LOB, (size_t) 0, (dvoid **) 0);
              if(fpctl != NULL)
@@ -726,8 +730,8 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
       nextcol->colwidth=nextcol->colwidth+1;
 
       //nextcol->colname[MAX_ITEM_BUFFER_SIZE]='\0';
-      nextcol->colbuf = malloc((int)(DEFAULT_ARRAY_SIZE * nextcol->colwidth));
-      memset(nextcol->colbuf,0,(int)(DEFAULT_ARRAY_SIZE * nextcol->colwidth));
+      nextcol->colbuf = malloc((int)(arraysize * nextcol->colwidth));
+      memset(nextcol->colbuf,0,(int)(arraysize * nextcol->colwidth));
 
       //define output
       if (nextcol->coltype==SQLT_BLOB)

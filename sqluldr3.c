@@ -30,6 +30,7 @@
 #endif
 
 #define  MIN(a,b) ((a) > (b) ? (b) : (a))
+#define  MAX(a,b) ((a) > (b) ? (a) : (b))
 
 struct COLUMN
 {
@@ -660,26 +661,31 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
       arraysize = DEFAULT_ARRAY_SIZE;
       switch(nextcol->coltype)
       {
-          case SQLT_DATE:
+          case SQLT_DATE:	      
           case SQLT_DAT:
+	      nextcol->colwidth = MAX(nextcol->colwidth, 19);	      
               if(fpctl != NULL)
                  fprintf(fpctl,"  %s DATE \"YYYY-MM-DD HH24:MI:SS\"", nextcol->colname);
               break;
           case SQLT_TIMESTAMP: /* TIMESTAMP */
+	      nextcol->colwidth = MAX(nextcol->colwidth, 26);
               if(fpctl != NULL)
                  fprintf(fpctl,"  %s TIMESTAMP \"YYYY-MM-DD HH24:MI:SSXFF\"", nextcol->colname);
               break;
           case SQLT_TIMESTAMP_TZ: /* TIMESTAMP WITH TIMEZONE */
+	      nextcol->colwidth = MAX(nextcol->colwidth, 33);
               if(fpctl != NULL)
                  fprintf(fpctl,"  %s TIMESTAMP WITH TIME ZONE \"YYYY-MM-DD HH24:MI:SSXFF TZH:TZM\"", nextcol->colname );
               break;
           case SQLT_LBI:  /* LONG RAW */
+             nextcol->colwidth = DEFAULT_LONG_SIZE;
              if(fpctl != NULL)
                 fprintf(fpctl,"  %s CHAR(%d) ", nextcol->colname, 2 * DEFAULT_LONG_SIZE);
              break;
           case SQLT_BLOB: /* BLOB */
           	 //DEFAULT_ARRAY_SIZE = 1;
 		 arraysize = 1;
+		 nextcol->colwidth = DEFAULT_LONG_SIZE;
           	 OCIDescriptorAlloc((dvoid *) envhp, (dvoid **) &nextcol->blob,
           	                    (ub4)OCI_DTYPE_LOB, (size_t) 0, (dvoid **) 0);
              if(fpctl != NULL)
@@ -692,6 +698,7 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
           case SQLT_CLOB: /* BLOB */
           	 //DEFAULT_ARRAY_SIZE = 1;
 		 arraysize = 1;
+		 nextcol->colwidth = DEFAULT_LONG_SIZE;
           	 OCIDescriptorAlloc((dvoid *) envhp, (dvoid **) &nextcol->clob,
           	                    (ub4)OCI_DTYPE_LOB, (size_t) 0, (dvoid **) 0);
              if(fpctl != NULL)
@@ -701,16 +708,25 @@ sword getColumns(FILE *fpctl,OCIStmt *stmhp, struct COLUMN *collist)
                                  nextcol->colname, col+1,col+1);
              }   
           	 break;
+	  case SQLT_RID:
+	      nextcol->colwidth = MAX(nextcol->colwidth, 18);
+              if(fpctl != NULL)
+                fprintf(fpctl, "  %s CHAR", nextcol->colname);
+              break;		      
           case SQLT_RDD:
+	      nextcol->colwidth = MAX(nextcol->colwidth, 18);
               if(fpctl != NULL)
                 fprintf(fpctl, "  %s CHAR", nextcol->colname);
               break;
           case SQLT_INT:
           case SQLT_NUM:
+	     if (nextcol->precision > 0) nextcol->colwidth = MAX(nextcol->colwidth, nextcol->precision);
+             else nextcol->colwidth = MAX(nextcol->colwidth, 40);
              if(fpctl != NULL)
                 fprintf(fpctl,"  %s CHAR", nextcol->colname);
              break;
           case SQLT_FILE: /* BFILE */
+             nextcol->colwidth = DEFAULT_LONG_SIZE;
              if(fpctl != NULL)
                 fprintf(fpctl,"  %s CHAR(%d)", nextcol->colname,DEFAULT_LONG_SIZE);
              break;

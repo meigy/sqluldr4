@@ -846,7 +846,7 @@ void printRow(text *fname,OCISvcCtx *svchp,OCIStmt *stmhp,struct COLUMN *col,tex
           if (*(cols[c]->indp+r) >= 0)
           {
 
-             if (cols[c]->coltype == 24) //not long type
+             if (cols[c]->coltype == SQLT_LBI) //not long type
              {
                 /* fprintf(fp, "%010d", 2 * *(cols[c]->col_retlen+r)); */
                 /* fwrite(cols[c]->colbuf+(r* cols[c]->dsize),*(cols[c]->col_retlen+r),1,fp); */
@@ -855,7 +855,7 @@ void printRow(text *fname,OCISvcCtx *svchp,OCIStmt *stmhp,struct COLUMN *col,tex
                    fprintf(fp, "%02x", cols[c]->colbuf[r * cols[c]->colwidth + j]);
                 }
              }
-             else if (cols[c]->coltype == 113) //blob type
+             else if (cols[c]->coltype == SQLT_BLOB) //blob type
              {
                sprintf((char *) lob_filename, (char *)"LF_%d_%d.blob",c+1,trows+1);
                fwrite((void *)lob_filename,sizeof(lob_filename),1,fp);               
@@ -868,7 +868,7 @@ void printRow(text *fname,OCISvcCtx *svchp,OCIStmt *stmhp,struct COLUMN *col,tex
                stream_read_blob(cols[c]->blob, fp_lob);
                fclose(fp_lob);
              }
-             else if (cols[c]->coltype == 112) //clob type
+             else if (cols[c]->coltype == SQLT_CLOB) //clob type
              {
                stream_read_clob(cols[c]->clob, fp);
              }	

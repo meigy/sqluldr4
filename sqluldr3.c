@@ -22,6 +22,9 @@
 #define MAX_SELECT_LIST_SIZE    1024
 #define MAXBUFLEN               5120
 #define ROW_BATCH_SIZE          500000
+#define ARG_SIZE                132
+#define LONGARG_SIZE            8192
+#define NAMEARG_SIZE            256
 
 #if defined(_WIN32)
 #define STRNCASECMP memicmp
@@ -100,17 +103,17 @@ int main(int argc, char *argv[])
   
   struct COLUMN col;
 
-  text tempbuf[1024];
-  text user[132]="";
-  text query[32768]="";
-  text sqlfname[255]="";
-  text tabname[132]="";
-  text tabmode[132]="INSERT";
-  text fname[255]="uldrdata.txt";
-  text ctlfname[256]="";
-  text field[132]=",";
-  text logfile[256]="";
-  text record[132]="\n";
+  text tempbuf[MAXBUFLEN]       = "";
+  text user[ARG_SIZE]           = "";
+  text query[4 * LONGARG_SIZE]  = "";
+  text sqlfname[NAMEARG_SIZE]   = "";
+  text tabname[ARG_SIZE]        = "";
+  text tabmode[ARG_SIZE]        = "INSERT";
+  text fname[NAMEARG_SIZE]      = "uldrdata.txt";
+  text ctlfname[NAMEARG_SIZE]   = "";
+  text field[ARG_SIZE]          = ",";
+  text logfile[NAMEARG_SIZE]    = "";
+  text record[ARG_SIZE]         = "\n";
   
   int  flen,rlen;
   int  buffer= 16777216;
@@ -123,9 +126,9 @@ int main(int argc, char *argv[])
   int  header= 0;
 
   
-  char *p_user=malloc(50);
-  char *p_pass=malloc(50);
-  char *p_host=malloc(20);
+  char *p_user = malloc(64);
+  char *p_pass = malloc(64);
+  char *p_host = malloc(64);
   
   FILE *fp = NULL;
   FILE *fpctl = NULL;
@@ -134,129 +137,129 @@ int main(int argc, char *argv[])
      
   for(i=0;i<argc;i++)
   {
-    if (STRNCASECMP("user=",argv[i],5)==0)
+    if (STRNCASECMP("user=", argv[i], 5) == 0)
     {
-        memset(user,0,132);
-        memcpy(user,argv[i]+5,MIN(strlen(argv[i]) - 5,131));
+        memset(user, 0, ARG_SIZE);
+        memcpy(user,argv[i] + 5, MIN(strlen(argv[i]) - 5, ARG_SIZE - 1));
     }
-    else if (STRNCASECMP("query=",argv[i],6)==0)
+    else if (STRNCASECMP("query=", argv[i], 6) == 0)
     {
-        memset(query,0,8192);
-        memcpy(query,argv[i]+6,MIN(strlen(argv[i]) - 6,8191));
+        memset(query, 0, 4 * LONGARG_SIZE);
+        memcpy(query, argv[i] + 6, MIN(strlen(argv[i]) - 6, 4 * LONGARG_SIZE - 1));
     }
-    else if (STRNCASECMP("sql=",argv[i],4)==0)
+    else if (STRNCASECMP("sql=", argv[i],4) == 0)
     {
-        memset(sqlfname,0,132);
-        memcpy(sqlfname,argv[i]+4,MIN(strlen(argv[i]) - 4,254));
+        memset(sqlfname, 0, NAMEARG_SIZE);
+        memcpy(sqlfname, argv[i] + 4, MIN(strlen(argv[i]) - 4, NAMEARG_SIZE - 1));
     }
-    else if (STRNCASECMP("file=",argv[i],5)==0)
+    else if (STRNCASECMP("file=", argv[i],5) == 0)
     {
-        memset(fname,0,132);
-        memcpy(fname,argv[i]+5,MIN(strlen(argv[i]) - 5,254));
+        memset(fname, 0, NAMEARG_SIZE);
+        memcpy(fname, argv[i] + 5, MIN(strlen(argv[i]) - 5, NAMEARG_SIZE - 1));
     }     
-    else if (STRNCASECMP("field=",argv[i],6)==0)
+    else if (STRNCASECMP("field=", argv[i],6) == 0)
     {
-        memset(field,0,132);
-        flen=convertOption(argv[i]+6,field,MIN(strlen(argv[i]) - 6,131));
+        memset(field, 0, ARG_SIZE);
+        flen = convertOption(argv[i] + 6, field, MIN(strlen(argv[i]) - 6, ARG_SIZE - 1));
     }
-    else if (STRNCASECMP("record=",argv[i],7)==0)
+    else if (STRNCASECMP("record=", argv[i],7) == 0)
     {
-        memset(record,0,132);
-        rlen=convertOption(argv[i]+7,record,MIN(strlen(argv[i]) - 7,131));
+        memset(record, 0, ARG_SIZE);
+        rlen = convertOption(argv[i] + 7, record, MIN(strlen(argv[i]) - 7, ARG_SIZE - 1));
     }     
-    else if (STRNCASECMP("log=",argv[i],4)==0)
+    else if (STRNCASECMP("log=", argv[i],4) == 0)
     {
-        memset(logfile,0,256);
-        memcpy(logfile,argv[i]+4,MIN(strlen(argv[i]) - 4,254));
+        memset(logfile, 0, NAMEARG_SIZE);
+        memcpy(logfile, argv[i] + 4, MIN(strlen(argv[i]) - 4, NAMEARG_SIZE - 1));
     }     
-    else if (STRNCASECMP("table=",argv[i],6)==0)
+    else if (STRNCASECMP("table=", argv[i],6) == 0)
     {
-        memset(tabname,0,132);
-        memcpy(tabname,argv[i]+6,MIN(strlen(argv[i]) - 6,128));
+        memset(tabname, 0, ARG_SIZE);
+        memcpy(tabname, argv[i] + 6, MIN(strlen(argv[i]) - 6, ARG_SIZE - 1));
     }     
-    else if (STRNCASECMP("mode=",argv[i],5)==0)
+    else if (STRNCASECMP("mode=", argv[i],5) == 0)
     {
-        memset(tabmode,0,132);
-        memcpy(tabmode,argv[i]+5,MIN(strlen(argv[i]) - 5,128));
+        memset(tabmode, 0, ARG_SIZE);
+        memcpy(tabmode, argv[i] + 5, MIN(strlen(argv[i]) - 5, ARG_SIZE - 1));
     }     
-    else if (STRNCASECMP("head=",argv[i],5)==0)
+    else if (STRNCASECMP("head=", argv[i],5) == 0)
     {
-        memset(tempbuf,0,132);
-        memcpy(tempbuf,argv[i]+5,MIN(strlen(argv[i]) - 5,128));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 5, MIN(strlen(argv[i]) - 5, MAXBUFLEN - 1));
         header = 0;
-        if (STRNCASECMP(tempbuf,"YES",3) == 0) header = 1;
-        if (STRNCASECMP(tempbuf,"ON",3) == 0) header = 1;
+        if (STRNCASECMP(tempbuf, "YES", 3) == 0) header = 1;
+        if (STRNCASECMP(tempbuf, "ON", 3) == 0) header = 1;
     }     
-    else if (STRNCASECMP("sort=",argv[i],5)==0)
+    else if (STRNCASECMP("sort=", argv[i], 5) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+5,MIN(strlen(argv[i]) - 5,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 5, MIN(strlen(argv[i]) - 5, MAXBUFLEN - 1));
         ssize = atoi(tempbuf);
         if (ssize < 0) ssize = 0;
         if (ssize > 512) ssize = 512;
     }     
-    else if (STRNCASECMP("buffer=",argv[i],7)==0)
+    else if (STRNCASECMP("buffer=",argv[i],7) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+7,MIN(strlen(argv[i]) - 7,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf,argv[i] + 7, MIN(strlen(argv[i]) - 7, MAXBUFLEN - 1));
         buffer = atoi(tempbuf);
         if (buffer < 8) buffer = 8;
         if (ssize > 100) buffer = 100;
         buffer = buffer * 1048576;
     }     
-    else if (STRNCASECMP("long=",argv[i],5)==0)
+    else if (STRNCASECMP("long=", argv[i], 5) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+5,MIN(strlen(argv[i]) - 5,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i]+5, MIN(strlen(argv[i]) - 5, MAXBUFLEN - 1));
         DEFAULT_LONG_SIZE = atoi(tempbuf);
         if (DEFAULT_LONG_SIZE < 100) DEFAULT_LONG_SIZE = 100;
         if (DEFAULT_LONG_SIZE > 32767) DEFAULT_LONG_SIZE = 32767;
     }
-    else if (STRNCASECMP("array=",argv[i],6)==0)
+    else if (STRNCASECMP("array=", argv[i], 6) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+6,MIN(strlen(argv[i]) - 6,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 6, MIN(strlen(argv[i]) - 6, MAXBUFLEN - 1));
         DEFAULT_ARRAY_SIZE = atoi(tempbuf);
         if (DEFAULT_ARRAY_SIZE < 5) DEFAULT_ARRAY_SIZE = 5;
         if (DEFAULT_ARRAY_SIZE > 2000) DEFAULT_ARRAY_SIZE = 2000;
     }
-    else if (STRNCASECMP("hash=",argv[i],5)==0)
+    else if (STRNCASECMP("hash=", argv[i], 5) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+5,MIN(strlen(argv[i]) - 5,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 5, MIN(strlen(argv[i]) - 5, MAXBUFLEN - 1));
         hsize = atoi(tempbuf);
         if (hsize < 0) hsize = 0;
         if (hsize > 512) hsize = 512;
     }     
-    else if (STRNCASECMP("read=",argv[i],5)==0)
+    else if (STRNCASECMP("read=", argv[i], 5) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+5,MIN(strlen(argv[i]) - 5,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 5, MIN(strlen(argv[i]) - 5, MAXBUFLEN - 1));
         bsize = atoi(tempbuf);
         if (bsize < 0) bsize = 0;
         if (bsize > 512) bsize = 512;
     }     
-    else if (STRNCASECMP("batch=",argv[i],6)==0)
+    else if (STRNCASECMP("batch=", argv[i], 6) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+6,MIN(strlen(argv[i]) - 6,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 6, MIN(strlen(argv[i]) - 6, MAXBUFLEN - 1));
         batch = atoi(tempbuf);
         if (batch < 0) batch = 0;
         if (batch == 1) batch = 2;
     }     
-    else if (STRNCASECMP("serial=",argv[i],7)==0)
+    else if (STRNCASECMP("serial=", argv[i], 7) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+7,MIN(strlen(argv[i]) - 7,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 7, MIN(strlen(argv[i]) - 7, MAXBUFLEN - 1));
         serial = atoi(tempbuf);
     }     
-    else if (STRNCASECMP("trace=",argv[i],6)==0)
+    else if (STRNCASECMP("trace=", argv[i], 6) == 0)
     {
-        memset(tempbuf,0,1024);
-        memcpy(tempbuf,argv[i]+6,MIN(strlen(argv[i]) - 6,254));
+        memset(tempbuf, 0, MAXBUFLEN);
+        memcpy(tempbuf, argv[i] + 6, MIN(strlen(argv[i]) - 6, MAXBUFLEN));
         trace = atoi(tempbuf);
     }     
-    else if (STRNCASECMP("-help",argv[i],4)==0)
+    else if (STRNCASECMP("-help", argv[i],4) == 0)
     {
     	  v_help=1;
     }     
@@ -269,10 +272,10 @@ int main(int argc, char *argv[])
     {
       while(!feof(fp))
       {
-        memset(tempbuf,0,1024);
-        fgets(tempbuf,1023,fp);
-        strcat(query,tempbuf);
-        strcat(query," ");
+        memset(tempbuf, 0, MAXBUFLEN);
+        fgets(tempbuf, MAXBUFLEN - 1, fp);
+        strcat(query, tempbuf);
+        strcat(query, " ");
       }
       fclose(fp);
     }
@@ -320,16 +323,21 @@ int main(int argc, char *argv[])
     }
   }		
 
+  memset(p_user, 0, 64);
+  memset(p_pass, 0, 64);
+  memset(p_host, 0, 64);
   //de username,password,host
-  destr(user,p_user,p_pass,p_host);
+  destr(user, p_user, p_pass, p_host);
 
   initialize();
   logon(p_user,p_pass,p_host);
   
+  printf("OCIHandleAlloc stmt handle\n");
   /*stmt handle*/
   OCIHandleAlloc((dvoid *) envhp, (dvoid **) &stmhp, OCI_HTYPE_STMT,
                  (size_t) 0, (dvoid **) 0);
   
+  printf("init session..\n");
   /*prepary session env*/
   prepareSql(stmhp,"ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'");
   executeSql(svchp,stmhp,1);
@@ -389,9 +397,9 @@ int main(int argc, char *argv[])
   //generate sql*loader controlfile
   if(strlen(tabname))
   {
-      memset(ctlfname,0,256);
-      sprintf(ctlfname,"%s_sqlldr.ctl",tabname);
-      fpctl = fopen(ctlfname,"wb+");
+      memset(ctlfname, 0, NAMEARG_SIZE);
+      sprintf(ctlfname, "%s_sqlldr.ctl", tabname);
+      fpctl = fopen(ctlfname, "wb+");
       
       if(fpctl != NULL)
       {
@@ -411,20 +419,28 @@ int main(int argc, char *argv[])
       }
   }
 
+  printf("execute: %s\n", query);
   /*prepary sql*/
   prepareSql(stmhp,query);
   
-  if (executeSql(svchp,stmhp,0))
-  	return;
-  
+  if (executeSql(svchp,stmhp,0)) {
+    printf("execute failed\n");
+  	return -1;
+  }
+
+  printf("execute success!\n");  
+
+  printf("export data..\n"); 
   /*get and define columns*/
-  getColumns(fpctl,stmhp,&col);
+  getColumns(fpctl,stmhp,&col);  
   
   /*output result*/
   printRow(fname,svchp,stmhp,&col,field,flen,record,rlen,batch, header);
 
   /*release resource*/
   freeColumn(&col);
+
+  printf("export done!\n"); 
   
   logout();
   cleanup();
@@ -438,23 +454,29 @@ void initialize ()
 {
   printf ("\nInitializing the environment..\n");
 
-  OCIEnvCreate((OCIEnv **) &envhp,OCI_THREADED|OCI_OBJECT,(dvoid *)0,
+  printf ("OCIEnvCreate\n");
+  OCIEnvCreate((OCIEnv **) &envhp, OCI_THREADED|OCI_OBJECT, (dvoid *)0,
         (dvoid * (*)(dvoid *, size_t)) 0,
         (dvoid * (*)(dvoid *, dvoid *, size_t))0,
         (void (*)(dvoid *, dvoid *)) 0,
         (size_t) 0, (dvoid **) 0);
 
+  printf ("OCIHandleAlloc rorre handle\n");
   /* error handle */
   OCIHandleAlloc ((dvoid *) envhp, (dvoid **) &errhp, OCI_HTYPE_ERROR,
                          (size_t) 0, (dvoid **) 0);
 
+  printf ("OCIHandleAlloc server handle\n");
   /* server handle */
   OCIHandleAlloc ((dvoid *) envhp, (dvoid **) &srvhp, OCI_HTYPE_SERVER,
                          (size_t) 0, (dvoid **) 0);
+
+  printf ("OCIHandleAlloc svcctx handle\n");                         
   /* svcctx handle*/
   OCIHandleAlloc ((dvoid *) envhp, (dvoid **) &svchp, OCI_HTYPE_SVCCTX,
                          (size_t) 0, (dvoid **) 0);
 
+  printf ("set attribute server context in the service context \n"); 
   /* set attribute server context in the service context */
   OCIAttrSet ((dvoid *) svchp, OCI_HTYPE_SVCCTX, (dvoid *)srvhp,
                      (ub4) 0, OCI_ATTR_SERVER, (OCIError *) errhp);
@@ -464,15 +486,17 @@ void initialize ()
 /* attach to the server and log on as SCOTT/TIGER                    */
 /* ----------------------------------------------------------------- */
 
-void logon (char *v_user,char *v_pass,char *v_host)
+void logon (char *v_user, char *v_pass, char *v_host)
 {
-  printf ("Logging on as %s..\n", v_user);
+  printf ("Logging on as %s | %s | %s ..\n", v_user, v_pass, v_host);
   OCIHandleAlloc ((dvoid *) envhp, (dvoid **)&sesshp,
                   (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0);
 
   if (strlen(v_host)==0)
   {
-   checkerr(errhp,OCIServerAttach (srvhp,errhp,(text *)0,(sb4)0,OCI_DEFAULT));
+    printf ("Connect to localhost!\n");
+    checkerr(errhp, OCIServerAttach(srvhp, errhp, (text *)0, (sb4)0, OCI_DEFAULT));
+    printf ("Connect sucessful!\n");
   }		
   else
   {
@@ -486,6 +510,7 @@ void logon (char *v_user,char *v_pass,char *v_host)
     }
   } 
 
+  printf ("set connection...\n");
   OCIAttrSet ((dvoid *)sesshp, (ub4)OCI_HTYPE_SESSION,
               (dvoid *)v_user, (ub4)strlen((char *)v_user),
               OCI_ATTR_USERNAME, errhp);
@@ -976,16 +1001,17 @@ sword executeSql(OCISvcCtx *svchp,OCIStmt *stmhp,ub4 execount)
 
 void destr(char *src,char *v_user,char *v_pass,char *v_host)
 {
-  char *r1="/";
-  char *r2="@";
-  int  n1=0;
-  int  n2=0;
-  n1=strcspn(src,r1);
-  n2=strcspn(src,r2);
+  char *r1 = "/";
+  char *r2 = "@";
+  int  n1 = 0;
+  int  n2 = 0;
 
-  strncpy(v_user,src,n1);
-  strncpy(v_pass,&src[n1+1],n2-n1-1);
-  strncpy(v_host,&src[n2+1],strlen(src)-n2-1);
+  n1 = strcspn(src, r1); // user len
+  n2 = strcspn(src, r2); // user/password len
+
+  strncpy(v_user, src, n1);
+  strncpy(v_pass, &src[n1 + 1], n2 - n1 - 1);
+  strncpy(v_host, &src[n2 + 1], strlen(src) - n2 - 1);
 }
 /* ----------------------------------------------------------------- */
 /* open files                                                        */
